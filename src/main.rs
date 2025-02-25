@@ -1,5 +1,7 @@
 use std::io::{self, ErrorKind, Read, Write};
 
+/// Enum representing Brainfuck commands.
+/// Jump instructions use command addresses for loop execution.
 #[derive(Debug)]
 enum Command {
     IncrementDataPointer,
@@ -14,11 +16,15 @@ enum Command {
 
 type CommandAddress = usize;
 
+/// Enum for possible parsing errors.
+/// Currently, it only detects unmatched brackets.
 #[derive(Debug)]
 enum ParsingError {
     UnmatchedBracket(CommandAddress),
 }
 
+/// Parses Brainfuck source code into a vector of `Command` instructions.
+/// Ensures that brackets are correctly matched and swaps jump commands accordingly.
 fn compile(text: &str) -> Result<Vec<Command>, ParsingError> {
     use self::Command as C;
 
@@ -66,6 +72,8 @@ fn compile(text: &str) -> Result<Vec<Command>, ParsingError> {
     Ok(commands)
 }
 
+/// Executes compiled Brainfuck commands on a memory tape.
+/// Handles input/output operations via provided `Read` and `Write` streams.
 fn eval_on_tape<R: Read, W: Write>(
     commands: &[Command],
     tape: &mut [u8],
@@ -115,6 +123,7 @@ fn eval_on_tape<R: Read, W: Write>(
     Ok(())
 }
 
+/// Wrapper function to initialize memory and execute a Brainfuck program.
 fn eval<R: Read, W: Write>(commands: &[Command], reader: R, writer: W) -> io::Result<()> {
     let mut tape = vec![0; 10_000];
     let data_pointer = tape.len() / 2;
@@ -141,6 +150,7 @@ fn main() -> io::Result<()> {
 mod tests {
     use super::*;
 
+    /// Test Brainfuck loop [->+<] which transfers a value from one cell to another.
     #[test]
     fn test_eval_add() {
         let mut tape = [1, 2];
@@ -165,6 +175,7 @@ mod tests {
         assert_eq!(tape[1], 1 + 2);
     }
 
+    /// Test full "Hello World!" Brainfuck program.
     #[test]
     fn test_hello_world() {
         let source_code = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]\
@@ -178,6 +189,7 @@ mod tests {
         assert_eq!(writer, "Hello World!\n".as_bytes());
     }
 
+    /// Test simple echo program that copies input to output.
     #[test]
     fn test_cat() {
         let source_code = ">,[>,]<[<]>[.>]";
